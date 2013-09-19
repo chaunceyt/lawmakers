@@ -5,3 +5,394 @@
  * lawmakers.module
  */
 
+/**
+ * Implements hook_entity_info().
+ */
+function lawmakers_entity_info() {
+  $lawmakers_entity_info['lawmakers'] = array(
+    'label' => t('Lawmakers'),
+    'label callback' => 'lawmakers_label_callback',
+    'entity class' => 'Lawmakers',
+    'controller class' => 'LawmakersController',
+    'base table' => 'lawmakers',
+    'uri callback' => 'lawmakers_uri',
+    'fieldable' => TRUE,
+    'entity keys' => array(
+      'id' => 'lawmakers_id'
+    ),
+    'uri callback' => 'entity_class_uri',
+    'load hook' => 'lawmakers_load',
+    'static cache' => TRUE,
+    'admin ui' => array(
+      'path' => 'admin/content/lawmakers',
+      'controller class' => 'LawmakersUIController',
+      'menu wildcard' => '%lawmakers',
+      'file' => 'includes/lawmakers.admin.inc',
+     ),
+     'module' => 'lawmakers',
+     'access callback' => 'lawmakers_access_callback',
+     'bundles' => array(
+      'lawmakers' => array(
+        'label' => 'Lawmakers',
+          'admin' => array(
+          'path' => 'admin/structure/lawmakers/manage',
+          'access arguments' => array('administer lawmakers'),
+         ),
+       ),
+     ),
+     'views controller class' => 'EntityDefaultViewsController',
+  );
+
+  return $lawmakers_entity_info;    
+}
+
+/**
+ * Implements hook_menu().
+ */
+function lawmakers_menu() {
+  $items = array();
+
+  $items['lawmakers/%lawmakers'] = array(
+    'title' => 'Lawmakers',
+    'page callback' => 'lawmakers_view_entity',
+    'page arguments' => array(1),
+    'access callback' => 'lawmakers_access_menu_callback',
+    'access arguments' => array('view', 1),
+  );
+
+  $items['admin/content/lawmakers/bulk/delete/%'] = array(
+    'title' => 'Bulk Delete Lawmakers',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('lawmakers_bulk_delete', 5),
+    'access arguments' => array('administer lawmakers entities'),
+    'file' => 'includes/lawmakers.admin.inc',
+  );
+
+  $items['admin/structure/lawmakers'] = array(
+    'title' => 'Lawmakers Fields',
+    'access arguments' => array('administer lawmakers entities'),
+    'type' => MENU_NORMAL_ITEM,
+  );
+ 
+  return $items;
+}
+
+
+/**
+ * Implements hook_permission().
+ */
+function lawmakers_permission() {
+  return array(
+    'administer lawmakers entities' => array(
+      'title' => t('Administer Lawmakers Entities'),
+      'description' => t('Allows a user to administer lawmaker entities'),
+    ),
+    'view lawmakers entities' => array(
+      'title' => t('View Lawmakers Entity'),
+      'description' => t('Allows a user to view the lawmakers entities.'),
+    ),
+    'create lawmakers entities' => array(
+      'title' => t('Create Lawmakers Entities'),
+      'description' => t('Allows a user to create lawmakers entities.'),
+    ),
+    'edit lawmakers entities' => array(
+      'title' => t('Edit Lawmakers Entities'),
+      'description' => t('Allows a user to edit lawmakers entities.'),
+    ),
+    'delete lawmakers entities' => array(
+      'title' => t('Delete Lawmakers Entities'),
+      'description' => t('Allows a user to delete lawmakers entities.'),
+    ),
+    'use lawmakers bulk operations' => array(
+      'title' => t('Do bulk operations on Lawmakers entities'),
+      'description' => t('Allows a user to do bulk operations.'),
+    ),
+  ); 
+}
+
+/**
+ * Check access permission for Lawmakers Entity UI.
+ *
+ */
+function lawmakers_access_menu_callback($op, $lawmakers = NULL, $account = NULL) {
+  switch ($op) {
+    case 'view':
+      return user_access('view lawmakers entities', $account);
+
+    case 'create':
+      return user_access('create lawmakers entities', $account);
+
+    case 'update':
+      return user_access('edit lawmakers entities', $account);
+
+    case 'delete':
+      return user_access('delete lawmakers entities', $account);
+  }
+
+  return FALSE;
+}
+
+/**
+ * Lawmakers access callback.
+ */
+function lawmakers_access_callback() {
+  if (user_is_anonymous() && !user_access('administer lawmakers entities')) {
+    return FALSE;
+  }
+  else {
+    return TRUE;
+  }
+}
+
+/**
+ * Implement hook_theme().
+ */
+function lawmakers_theme() {
+  return array(
+    'lawmakers_full' => array(
+      'variables' => array('lawmakers' => NULL),
+      'file' => 'includes/lawmakers.theme.inc',
+    ),
+ );
+}
+
+
+/**
+ * Label callback for lawmakers entities, for menu router, etc.
+ */
+function lawmakers_label_callback($lawmakers, $type) {
+  return empty($lawmakers->username) ? 'Untitled Lawmaker' : $lawmakers->username;
+}
+
+/**
+ * Saves Lawmaker to database.
+ */
+function lawmakers_save(lawmakers $lawmakers) {
+  return $lawmakers->save();
+}
+
+/**
+ * View for /lawmakers/<lawmakers_id> page.
+ */
+function lawmakers_view_entity($lawmakers) {
+  $fullname = $lawmakers->firstname . ' ' . $lawmakers->lastname;
+  drupal_set_title($fullname);
+  // Path not entity
+  $lawmakers_output = theme('lawmakers_full', array('lawmakers' => $lawmakers));
+  return $lawmakers_output;
+}
+
+/**
+ * Lawmakers custom entity class.
+ */
+class Lawmakers extends Entity {
+  protected function defaultUri() {
+    return array('path' => 'lawmakers/' . $this->identifier());
+  }
+}
+
+/**
+ * Menu autoloader for /lawmakers
+ */
+function lawmakers_load($lawmakers_id, $reset = FALSE) {
+  $lawmakers = lawmakers_load_multiple(array($lawmakers_id), array(), $reset);
+  return reset($lawmakers);
+}
+
+/**
+ * Load multiple lawmakers based on certain conditions.
+ */
+function lawmakers_load_multiple($lawmakers_ids = array(),  $conditions = array('in_office' => 1), $reset = FALSE) {
+  return entity_load('lawmakers', $lawmakers_ids, $conditions, $reset);
+}
+
+/**
+ * Deletes a lawmaker.
+ */
+function lawmakers_delete(lawmakers $lawmakers) {
+  $lawmakers->delete();
+}
+
+/**
+ * Delete multiple lawmakers.
+ */
+function lawmakers_delete_multiple(array $lawmakers_ids) {
+  entity_get_controller('lawmakers')->delete($lawmakers_ids);
+}
+
+/**
+ * Custom controller for the lawmakers entity.
+ */
+class LawmakersController extends EntityAPIController {
+
+  /**
+   * Override the build method for entity.
+   */
+  public function buildContent($entity, $view_mode = 'full', $langcode = NULL, $content = array()) {
+    $build = parent::buildContent($entity, $view_mode, $langcode, $content);
+
+    $build['username'] = array(
+        '#type' => 'markup',
+        '#markup' => 'Username: ' . $entity->username,
+        '#prefix' => '<div>',
+        '#suffix' => '</div>',
+        );
+
+    return $build;
+  }
+
+  /**
+   * Override the save method.
+   */
+  public function save($entity, DatabaseTransaction $transaction = NULL) {
+    if (isset($entity->is_new)) {
+      $entity->created = REQUEST_TIME;
+    }
+
+    $entity->changed = REQUEST_TIME;
+    return parent::save($entity, $transaction);
+  }
+}
+
+/**
+ * Custom controller for the administrator UI.
+ */
+class LawmakersUIController extends EntityDefaultUIController {
+
+  /**
+   * Override the menu hook for default ui controller.
+   */
+  public function hook_menu() {
+    $items = parent::hook_menu();
+    $items[$this->path]['title'] = t('Lawmakers');
+    $items[$this->path]['description'] = t('Manage lawmakers, including fields.');
+    $items[$this->path]['access callback'] = 'lawmakers_access_callback';
+    $items[$this->path]['access arguments'] = array('administer lawmakers entities');
+    $items[$this->path]['type'] = MENU_LOCAL_TASK;
+    return $items;
+  }
+
+  /**
+   * Admin form for searching and doing bulk operations.
+   */
+  public function overviewForm($form, &$form_state) {
+    $form['pager'] = array('#theme' => 'pager');
+
+    $header = array(
+        'lawmakers_id' => array('data' => t('Lawmakers ID'), 'field' => 'lawmakers_id'),
+        'username' => array('data' => t('Username'), 'field' => 'username'),
+        'operations' => array('data' => t('Operations'), 'field' => 'operations'),
+        );
+
+    $options = array();
+    $search_term = !empty($_GET['search']) ? $_GET['search'] : NULL;
+
+    $query = new EntityFieldQuery();
+    $query
+      ->entityCondition('entity_type', 'lawmakers');
+
+    if (!empty($search_term)) {
+      $query->propertyCondition('username', '%' . $search_term . '%', 'like');
+    }
+    // Check for sort order and sort key
+    if (!empty($_GET['sort']) && !empty($_GET['order'])) {
+      $sort = strtoupper($_GET['sort']);
+      $order = strtolower($_GET['order']);
+      $order = str_replace(' ', '_', $order);
+      if ($order != 'operations') {
+        $query->propertyOrderBy($order, $sort);
+      }
+    }
+
+    // 20 items per page
+    $query->pager(20);
+    define('ADMIN_CONTENT_LAMWAKERS_MANAGE_URI', 'admin/content/lawmakers/manage/');
+    define('ADMIN_CONTENT_LAWMAKERS_URI', 'admin/content/lawmakers');
+
+    $result = $query->execute();
+    $lawmakers_results = !empty($result['lawmakers']) ? $result['lawmakers'] : array();
+    $lawmakers_array = !empty($lawmakers_results) ? lawmakers_load_multiple(array_keys($lawmakers_results)) : array();
+    foreach ($lawmakers_array as $lawmakers_id => $lawmakers) {
+      $options['lawmakers_id-' . $lawmakers_id] = array(
+          'lawmakers_id' => $lawmakers->lawmakers_id,
+          'username' => l($lawmakers->username, 'lawmakers/' . $lawmakers->lawmakers_id),
+          'operations' => 
+            l(t('View'), 'lawmakers/' . $lawmakers->lawmakers_id) . ' ' . 
+            l(t('Edit'), ADMIN_CONTENT_LAMWAKERS_MANAGE_URI . $lawmakers_id, array('query' => array('destination' => ADMIN_CONTENT_LAWMAKERS_URI))) . ' ' . 
+            l(t('Delete'), ADMIN_CONTENT_LAMWAKERS_MANAGE_URI . $lawmakers_id . '/delete', array('attributes' => array('class' => array('lawmakers-delete-' . $lawmakers->lawmakers_id), ), 'query' => array('destination' => ADMIN_CONTENT_LAWMAKERS_URI))),
+          );
+    }
+
+    $form['search'] = array(
+      '#type' => 'fieldset',
+      '#title' => t('Basic Search'),
+      '#collapsible' => TRUE,
+      '#collapsed' => !empty($search_term) ? FALSE : TRUE,
+    );
+
+    $form['search']['search_text'] = array(
+      '#type' => 'textfield',
+      '#title' => t('Search Term'),
+      '#default_value' => !empty($search_term) ? $search_term : '',
+    );
+
+    $form['search']['search_submit'] = array(
+      '#type' => 'submit',
+      '#value' => t('Search'),
+    );
+    
+    $form['bulk_operations'] = array(
+      '#type' => 'fieldset',
+      '#title' => t('Bulk Operations'),
+      '#collapsible' => TRUE,
+      '#collapsed' => TRUE,
+    );
+
+    $form['bulk_operations']['operations'] = array(
+      '#type' => 'select',
+      '#options' => array(
+        0 => t('Select a bulk operation'),
+        'delete' => t('Delete selected lawmakers'),
+      ),
+    );
+    
+    $form['bulk_operations']['submit'] = array(
+      '#type' => 'submit',
+      '#value' => t('Submit'),
+    );      
+
+    $form['entities'] = array(
+      '#type' => 'tableselect',
+      '#header' => $header,
+      '#options' => $options,
+      '#attributes' => array('class' => array('entity-sort-table')),
+      '#empty' => t('There are no lawmakers.'),
+    );
+
+    return $form; 
+  }
+
+  public function overviewFormSubmit($form, &$form_state) {
+    $values = $form_state['input'];
+    $lawmakers_ids = array();
+
+    if (!empty($values['entities'])) {
+      foreach ($values['entities'] as $index => $value) {
+        if (!empty($value)) {
+          $lawmakers_ids[] = str_replace('lawmakers_id-', '', $value);
+        }
+      }
+
+      switch ($values['operations']) {
+        case 'delete':
+          drupal_goto('admin/content/lawmakers/bulk/delete/' . implode('|', $lawmakers_ids));
+          break;
+      }
+    }
+
+    if (!empty($values['search_text'])) {
+      drupal_goto('admin/content/lawmakers', array('query' => array('search' => $values['search_text'])));
+    }
+  }
+
+}

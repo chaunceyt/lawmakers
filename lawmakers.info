@@ -1,1 +1,10 @@
 name = Lawmakers
+description = "Lawmaker Entity"
+core = 7.x
+package = Lawmakers
+
+dependencies[] = entity
+
+files[] = includes/lawmakers.admin.inc
+files[] = includes/lawmakers.theme.inc
+
