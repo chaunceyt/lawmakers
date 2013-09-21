@@ -216,6 +216,16 @@ function lawmakers_schema() {
         'length' => '255',
         'not null' => FALSE,
       ),
+      'created' => array(
+        'description' => 'Created timestamp',
+        'type' => 'int',
+        'not null' => FALSE,
+      ),
+      'changed' => array(
+        'description' => 'Changed timestamp',
+        'type' => 'int',
+        'not null' => FALSE,
+      ),
     ),
     'primary key' => array('lawmakers_id'),
     'indexes' => array(
