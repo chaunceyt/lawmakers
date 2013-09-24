@@ -20,10 +20,10 @@ class LawmakersTest extends PHPUnit_Framework_TestCase {
     $lawmaker['title'] = 'Justice';
     $mapped_data = entity_create('lawmakers', $lawmaker);
 
-    entity_save('lawmakers', $mapped_data);
+    lawmakers_save($mapped_data);
     $this->assertEquals(!empty($mapped_data->lawmakers_id), TRUE);
 
-    entity_delete('lawmakers', $mapped_data->lawmakers_id);
+    lawmakers_delete($mapped_data);
     $deleted_entity = lawmakers_load($mapped_data->lawmakers_id);
     $this->assertEquals(empty($deleted_entity->lawmakers_id), TRUE);
   }
