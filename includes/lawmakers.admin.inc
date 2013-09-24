@@ -297,10 +297,13 @@ function lawmakers_bulk_delete($form, &$form_state, $lawmakers_ids) {
   $form['summary'] = array(
     '#markup' => theme_item_list($variables),
   );
-  
-  return confirm_form($form, t('Delete all lawmakers?'), 'admin/content/lawmakers', t('Placeholder description'), t('Delete all'), t('Cancel'));  
+
+  return confirm_form($form, t('Delete all lawmakers?'), 'admin/content/lawmakers', t('Placeholder description'), t('Delete all'), t('Cancel'));
 }
 
+/**
+ * Implements hook_submit().
+ */
 function lawmakers_bulk_delete_submit($form, &$form_state) {
   $lawmakers_ids = $form_state['lawmakers_ids'];
   lawmakers_delete_multiple($lawmakers_ids);

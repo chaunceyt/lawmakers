@@ -234,5 +234,5 @@ function lawmakers_schema() {
       'username_idx' => array('username'),
     ),
   );
-  return $schema; 
+  return $schema;
 }

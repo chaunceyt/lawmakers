@@ -2,18 +2,18 @@
 /**
  * @file
  * Lawmaker Drush script.
- */ 
+ */
 
 /**
- * Implement hook_drush_command().
- */ 
+ * Implements hook_drush_command().
+ */
 function lawmakers_drush_command() {
   $items = array();
   $items['import-lawmakers'] = array(
     'callback' => 'lawmakers_import_csv_data',
     'description' => dt('Import Lawmakers from csv file.'),
   );
-  return $items;    
+  return $items;
 }
 
 /**
@@ -41,7 +41,7 @@ function _lawmakers_parse_csv() {
   $rows = array_map('str_getcsv', file($file));
   $header = array_shift($rows);
   foreach ($rows as $row) {
-      $items[] = array_combine($header, $row);
+    $items[] = array_combine($header, $row);
   }
 
   return $items;

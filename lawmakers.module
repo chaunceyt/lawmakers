@@ -5,6 +5,13 @@
  * lawmakers.module
  */
 
+// 20 items per page.
+define('TOTAL_ITEMS_PER_PAGE', 20);
+
+// Admin uri links.
+define('ADMIN_CONTENT_LAMWAKERS_MANAGE_URI', 'admin/content/lawmakers/manage/');
+define('ADMIN_CONTENT_LAWMAKERS_URI', 'admin/content/lawmakers');
+
 /**
  * Implements hook_entity_info().
  */
@@ -18,7 +25,7 @@ function lawmakers_entity_info() {
     'uri callback' => 'lawmakers_uri',
     'fieldable' => TRUE,
     'entity keys' => array(
-      'id' => 'lawmakers_id'
+      'id' => 'lawmakers_id',
     ),
     'uri callback' => 'entity_class_uri',
     'load hook' => 'lawmakers_load',
@@ -28,22 +35,22 @@ function lawmakers_entity_info() {
       'controller class' => 'LawmakersUIController',
       'menu wildcard' => '%lawmakers',
       'file' => 'includes/lawmakers.admin.inc',
-     ),
-     'module' => 'lawmakers',
-     'access callback' => 'lawmakers_access_callback',
-     'bundles' => array(
+    ),
+    'module' => 'lawmakers',
+    'access callback' => 'lawmakers_access_callback',
+    'bundles' => array(
       'lawmakers' => array(
         'label' => 'Lawmakers',
-          'admin' => array(
+        'admin' => array(
           'path' => 'admin/structure/lawmakers/manage',
           'access arguments' => array('administer lawmakers'),
-         ),
-       ),
-     ),
-     'views controller class' => 'EntityDefaultViewsController',
+        ),
+      ),
+    ),
+    'views controller class' => 'EntityDefaultViewsController',
   );
 
-  return $lawmakers_entity_info;    
+  return $lawmakers_entity_info;
 }
 
 /**
@@ -73,7 +80,7 @@ function lawmakers_menu() {
     'access arguments' => array('administer lawmakers entities'),
     'type' => MENU_NORMAL_ITEM,
   );
- 
+
   return $items;
 }
 
@@ -107,12 +114,11 @@ function lawmakers_permission() {
       'title' => t('Do bulk operations on Lawmakers entities'),
       'description' => t('Allows a user to do bulk operations.'),
     ),
-  ); 
+  );
 }
 
 /**
  * Check access permission for Lawmakers Entity UI.
- *
  */
 function lawmakers_access_menu_callback($op, $lawmakers = NULL, $account = NULL) {
   switch ($op) {
@@ -145,7 +151,7 @@ function lawmakers_access_callback() {
 }
 
 /**
- * Implement hook_theme().
+ * Implements hook_theme().
  */
 function lawmakers_theme() {
   return array(
@@ -153,7 +159,7 @@ function lawmakers_theme() {
       'variables' => array('lawmakers' => NULL),
       'file' => 'includes/lawmakers.theme.inc',
     ),
- );
+  );
 }
 
 
@@ -177,7 +183,7 @@ function lawmakers_save(lawmakers $lawmakers) {
 function lawmakers_view_entity($lawmakers) {
   $fullname = $lawmakers->firstname . ' ' . $lawmakers->lastname;
   drupal_set_title($fullname);
-  // Path not entity
+  // Path not entity.
   $lawmakers_output = theme('lawmakers_full', array('lawmakers' => $lawmakers));
   return $lawmakers_output;
 }
@@ -186,13 +192,16 @@ function lawmakers_view_entity($lawmakers) {
  * Lawmakers custom entity class.
  */
 class Lawmakers extends Entity {
+  /**
+   * Override defaultUri().
+   */
   protected function defaultUri() {
     return array('path' => 'lawmakers/' . $this->identifier());
   }
 }
 
 /**
- * Menu autoloader for /lawmakers
+ * Menu autoloader for /lawmakers.
  */
 function lawmakers_load($lawmakers_id, $reset = FALSE) {
   $lawmakers = lawmakers_load_multiple(array($lawmakers_id), array(), $reset);
@@ -202,7 +211,7 @@ function lawmakers_load($lawmakers_id, $reset = FALSE) {
 /**
  * Load multiple lawmakers based on certain conditions.
  */
-function lawmakers_load_multiple($lawmakers_ids = array(),  $conditions = array('in_office' => 1), $reset = FALSE) {
+function lawmakers_load_multiple($lawmakers_ids = array(), $conditions = array('in_office' => 1), $reset = FALSE) {
   return entity_load('lawmakers', $lawmakers_ids, $conditions, $reset);
 }
 
@@ -232,11 +241,11 @@ class LawmakersController extends EntityAPIController {
     $build = parent::buildContent($entity, $view_mode, $langcode, $content);
 
     $build['username'] = array(
-        '#type' => 'markup',
-        '#markup' => 'Username: ' . $entity->username,
-        '#prefix' => '<div>',
-        '#suffix' => '</div>',
-        );
+      '#type' => 'markup',
+      '#markup' => 'Username: ' . $entity->username,
+      '#prefix' => '<div>',
+      '#suffix' => '</div>',
+    );
 
     return $build;
   }
@@ -279,10 +288,10 @@ class LawmakersUIController extends EntityDefaultUIController {
     $form['pager'] = array('#theme' => 'pager');
 
     $header = array(
-        'lawmakers_id' => array('data' => t('Lawmakers ID'), 'field' => 'lawmakers_id'),
-        'username' => array('data' => t('Username'), 'field' => 'username'),
-        'operations' => array('data' => t('Operations'), 'field' => 'operations'),
-        );
+      'lawmakers_id' => array('data' => t('Lawmakers ID'), 'field' => 'lawmakers_id'),
+      'username' => array('data' => t('Username'), 'field' => 'username'),
+      'operations' => array('data' => t('Operations'), 'field' => 'operations'),
+    );
 
     $options = array();
     $search_term = !empty($_GET['search']) ? $_GET['search'] : NULL;
@@ -294,7 +303,7 @@ class LawmakersUIController extends EntityDefaultUIController {
     if (!empty($search_term)) {
       $query->propertyCondition('username', '%' . $search_term . '%', 'like');
     }
-    // Check for sort order and sort key
+    // Check for sort order and sort key.
     if (!empty($_GET['sort']) && !empty($_GET['order'])) {
       $sort = strtoupper($_GET['sort']);
       $order = strtolower($_GET['order']);
@@ -304,23 +313,20 @@ class LawmakersUIController extends EntityDefaultUIController {
       }
     }
 
-    // 20 items per page
-    $query->pager(20);
-    define('ADMIN_CONTENT_LAMWAKERS_MANAGE_URI', 'admin/content/lawmakers/manage/');
-    define('ADMIN_CONTENT_LAWMAKERS_URI', 'admin/content/lawmakers');
+    $query->pager(TOTAL_ITEMS_PER_PAGE);
 
     $result = $query->execute();
     $lawmakers_results = !empty($result['lawmakers']) ? $result['lawmakers'] : array();
     $lawmakers_array = !empty($lawmakers_results) ? lawmakers_load_multiple(array_keys($lawmakers_results)) : array();
     foreach ($lawmakers_array as $lawmakers_id => $lawmakers) {
       $options['lawmakers_id-' . $lawmakers_id] = array(
-          'lawmakers_id' => $lawmakers->lawmakers_id,
-          'username' => l($lawmakers->username, 'lawmakers/' . $lawmakers->lawmakers_id),
-          'operations' => 
-            l(t('View'), 'lawmakers/' . $lawmakers->lawmakers_id) . ' ' . 
-            l(t('Edit'), ADMIN_CONTENT_LAMWAKERS_MANAGE_URI . $lawmakers_id, array('query' => array('destination' => ADMIN_CONTENT_LAWMAKERS_URI))) . ' ' . 
-            l(t('Delete'), ADMIN_CONTENT_LAMWAKERS_MANAGE_URI . $lawmakers_id . '/delete', array('attributes' => array('class' => array('lawmakers-delete-' . $lawmakers->lawmakers_id), ), 'query' => array('destination' => ADMIN_CONTENT_LAWMAKERS_URI))),
-          );
+        'lawmakers_id' => $lawmakers->lawmakers_id,
+        'username' => l($lawmakers->username, 'lawmakers/' . $lawmakers->lawmakers_id),
+        'operations' =>
+        l(t('View'), 'lawmakers/' . $lawmakers->lawmakers_id) . ' ' .
+        l(t('Edit'), ADMIN_CONTENT_LAMWAKERS_MANAGE_URI . $lawmakers_id, array('query' => array('destination' => ADMIN_CONTENT_LAWMAKERS_URI))) . ' ' .
+        l(t('Delete'), ADMIN_CONTENT_LAMWAKERS_MANAGE_URI . $lawmakers_id . '/delete', array('attributes' => array('class' => array('lawmakers-delete-' . $lawmakers->lawmakers_id), ), 'query' => array('destination' => ADMIN_CONTENT_LAWMAKERS_URI))),
+      );
     }
 
     $form['search'] = array(
@@ -340,7 +346,7 @@ class LawmakersUIController extends EntityDefaultUIController {
       '#type' => 'submit',
       '#value' => t('Search'),
     );
-    
+
     $form['bulk_operations'] = array(
       '#type' => 'fieldset',
       '#title' => t('Bulk Operations'),
@@ -355,11 +361,11 @@ class LawmakersUIController extends EntityDefaultUIController {
         'delete' => t('Delete selected lawmakers'),
       ),
     );
-    
+
     $form['bulk_operations']['submit'] = array(
       '#type' => 'submit',
       '#value' => t('Submit'),
-    );      
+    );
 
     $form['entities'] = array(
       '#type' => 'tableselect',
@@ -369,9 +375,12 @@ class LawmakersUIController extends EntityDefaultUIController {
       '#empty' => t('There are no lawmakers.'),
     );
 
-    return $form; 
+    return $form;
   }
 
+  /**
+   * Form Submit method.
+   */
   public function overviewFormSubmit($form, &$form_state) {
     $values = $form_state['input'];
     $lawmakers_ids = array();

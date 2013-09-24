@@ -14,6 +14,10 @@ $_SERVER['REQUEST_METHOD'] = 'get';
 drupal_bootstrap(DRUPAL_BOOTSTRAP_FULL);
 
 class LawmakersTest extends PHPUnit_Framework_TestCase {
+
+  /**
+   * Create Lawmakers Test.
+   */
   public function testCreateLawmakers() {
     $lawmaker = lawmakers_test_data();
     $lawmaker['username'] = $lawmaker['firstname'] . '_' . $lawmaker['lastname'];
