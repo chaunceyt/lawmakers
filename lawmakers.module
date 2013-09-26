@@ -5,8 +5,8 @@
  * lawmakers.module
  */
 
-// 20 items per page.
-define('TOTAL_ITEMS_PER_PAGE', 20);
+// 50 items per page.
+define('TOTAL_ITEMS_PER_PAGE', 50);
 
 // Admin uri links.
 define('ADMIN_CONTENT_LAMWAKERS_MANAGE_URI', 'admin/content/lawmakers/manage/');
@@ -33,7 +33,6 @@ function lawmakers_entity_info() {
     'admin ui' => array(
       'path' => 'admin/content/lawmakers',
       'controller class' => 'LawmakersUIController',
-      'menu wildcard' => '%lawmakers',
       'file' => 'includes/lawmakers.admin.inc',
     ),
     'module' => 'lawmakers',
@@ -67,6 +66,11 @@ function lawmakers_menu() {
     'access arguments' => array('view', 1),
   );
 
+  $items['lawmakers/locate'] = array(
+    'page callback' => 'lawmakers_locate_callback',
+    'access arguments' => array('access content'),
+  );
+
   $items['admin/content/lawmakers/bulk/delete/%'] = array(
     'title' => 'Bulk Delete Lawmakers',
     'page callback' => 'drupal_get_form',
@@ -84,6 +88,28 @@ function lawmakers_menu() {
   return $items;
 }
 
+/**
+ * Help function api data.
+ */
+function lawmakers_locate_callback() {
+  $params = drupal_get_query_parameters();
+
+  if (isset($params['state'])) {
+    $conditions = $params['state'];
+    $result = lawmakers_entity_query($conditions);
+    $data = lawmakers_load_multiple($result);
+    drupal_json_output($data);
+  }
+  elseif (isset($params['party']) && isset($params['chamber'])) {
+    $chamber = array('title' => $params['chamber']);
+    $party = array('party' => $params['party']);
+    $conditions = array_merge($party, $chamber);
+    $result = lawmakers_entity_query($conditions);
+    $data = lawmakers_load_multiple($result);
+    drupal_json_output($data);
+  }
+
+}
 
 /**
  * Implements hook_permission().
@@ -162,6 +188,30 @@ function lawmakers_theme() {
   );
 }
 
+/**
+ * Helper function for custom queries.
+ */
+function lawmakers_entity_query($conditions = array()) {
+
+  $query = new EntityFieldQuery();
+  $query->entityCondition('entity_type', 'lawmakers');
+
+  // Apply conditions.
+  foreach ($conditions as $key => $value) {
+    $query->propertyCondition($key, $value);
+  }
+
+  $result = $query->execute();
+
+  if (isset($result['lawmakers'])) {
+    $lawmakers = array_keys($result['lawmakers']);
+  }
+  else {
+    $lawmakers = array();
+  }
+
+  return $lawmakers;
+}
 
 /**
  * Label callback for lawmakers entities, for menu router, etc.
@@ -235,22 +285,6 @@ function lawmakers_delete_multiple(array $lawmakers_ids) {
 class LawmakersController extends EntityAPIController {
 
   /**
-   * Override the build method for entity.
-   */
-  public function buildContent($entity, $view_mode = 'full', $langcode = NULL, $content = array()) {
-    $build = parent::buildContent($entity, $view_mode, $langcode, $content);
-
-    $build['username'] = array(
-      '#type' => 'markup',
-      '#markup' => 'Username: ' . $entity->username,
-      '#prefix' => '<div>',
-      '#suffix' => '</div>',
-    );
-
-    return $build;
-  }
-
-  /**
    * Override the save method.
    */
   public function save($entity, DatabaseTransaction $transaction = NULL) {
@@ -320,7 +354,7 @@ class LawmakersUIController extends EntityDefaultUIController {
     $lawmakers_array = !empty($lawmakers_results) ? lawmakers_load_multiple(array_keys($lawmakers_results)) : array();
     foreach ($lawmakers_array as $lawmakers_id => $lawmakers) {
       $options['lawmakers_id-' . $lawmakers_id] = array(
-        'lawmakers_id' => $lawmakers->lawmakers_id,
+        'lawmakers_id' => l($lawmakers->lawmakers_id, 'lawmakers/' . $lawmakers->lawmakers_id),
         'username' => l($lawmakers->username, 'lawmakers/' . $lawmakers->lawmakers_id),
         'operations' =>
         l(t('View'), 'lawmakers/' . $lawmakers->lawmakers_id) . ' ' .
