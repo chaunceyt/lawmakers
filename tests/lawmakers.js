@@ -1,6 +1,10 @@
 // Behavioral Testing: Lawmakers
 
 var casper = require("casper").create();
+if (!casper.cli.get('environment')) {
+  casper.echo('Usage: $ casperjs lawmakers.js --environment=domain.tld').exit(-1);
+}
+
 var environment = casper.cli.get('environment');
 var link = 'http://' + environment;
 
@@ -23,7 +27,9 @@ casper.then(function() {
 
 casper.thenOpen(link + '/admin/content/lawmakers/add');
 
+// Create a lawmaker via the admin form.
 casper.then(function() {
+  this.test.comment('Creating lawmaker...');
   this.test.assertExists('#lawmakers-form');
   this.test.assertExists('form#lawmakers-form');
   this.fill('form#lawmakers-form', {
@@ -59,19 +65,24 @@ casper.then(function() {
     }, false);
     this.click('#edit-submit');
 }); 
- 
+
+// See if we got an error. 
 casper.then(function() {
   //this.test.assertHttpStatus(302);
   this.test.assertDoesntExist('.messages.error');
 });
 
+
 casper.then(function() {
+  this.test.comment('Checking for the lawmaker\'s name...');
   this.test.assertExists('.lawmakers-name');
   this.test.assertSelectorHasText('.lawmakers-name','Rep. Grey Goose');
   this.clickLabel('Edit');  
 });
 
+// Edit the entity.
 casper.then(function() {
+  this.test.comment('Editing the newly created lawmaker...');
   this.test.assertExists('#lawmakers-form');
   this.test.assertExists('form#lawmakers-form');
   this.fill('form#lawmakers-form', {
@@ -80,7 +91,9 @@ casper.then(function() {
   this.click('#edit-submit');
 });
 
+// Validate the edit.
 casper.then(function() {
+  this.test.comment('Verifying lawmaker\'s landing page...');
   this.test.assertHttpStatus(302);
   this.test.assertExists('.lawmakers-name');
   this.test.assertSelectorHasText('.lawmakers-name','Sen. Grey Goose');
@@ -88,6 +101,9 @@ casper.then(function() {
   this.test.assertSelectorHasText('.congress_office','2111 Rayburn House Office Building');
   this.test.assertSelectorHasText('.phone','tel: 202-225-2601');
   this.test.assertSelectorHasText('.fax','fax: 202-225-1589');
+  this.test.assertExists('.website a', 'Website URL exists');
+  this.test.assertExists('.twitter a', 'Twitter URL exists');
+  this.test.assertExists('.youtube a', 'Youtube URL exists');
 });  
 
 casper.run(function() {
