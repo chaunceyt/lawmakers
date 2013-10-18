@@ -1,6 +1,10 @@
 // Behavioral Testing: Lawmakers
 
-var casper = require("casper").create();
+var casper = require('casper').create({
+  verbose: false,
+  logLevel: "debug"
+});
+
 if (!casper.cli.get('environment')) {
   casper.echo('Usage: $ casperjs lawmakers.js --environment=domain.tld').exit(-1);
 }
@@ -8,10 +12,6 @@ if (!casper.cli.get('environment')) {
 var environment = casper.cli.get('environment');
 var link = 'http://' + environment;
 
-var casper = require('casper').create({
-  verbose: false,
-  logLevel: "debug"
-});
 
 casper.start(link + '/user', function() {
   this.test.assertExists('#user-login');
