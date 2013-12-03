@@ -358,8 +358,8 @@ class LawmakersUIController extends EntityDefaultUIController {
         'username' => l($lawmakers->username, 'lawmakers/' . $lawmakers->lawmakers_id),
         'operations' =>
         l(t('View'), 'lawmakers/' . $lawmakers->lawmakers_id) . ' ' .
-        l(t('Edit'), ADMIN_CONTENT_LAMWAKERS_MANAGE_URI . $lawmakers_id, array('query' => array('destination' => ADMIN_CONTENT_LAWMAKERS_URI))) . ' ' .
-        l(t('Delete'), ADMIN_CONTENT_LAMWAKERS_MANAGE_URI . $lawmakers_id . '/delete', array('attributes' => array('class' => array('lawmakers-delete-' . $lawmakers->lawmakers_id), ), 'query' => array('destination' => ADMIN_CONTENT_LAWMAKERS_URI))),
+        l(t('Edit'), ADMIN_CONTENT_LAWMAKERS_MANAGE_URI . $lawmakers_id, array('query' => array('destination' => ADMIN_CONTENT_LAWMAKERS_URI))) . ' ' .
+        l(t('Delete'), ADMIN_CONTENT_LAWMAKERS_MANAGE_URI . $lawmakers_id . '/delete', array('attributes' => array('class' => array('lawmakers-delete-' . $lawmakers->lawmakers_id), ), 'query' => array('destination' => ADMIN_CONTENT_LAWMAKERS_URI))),
       );
     }
 
