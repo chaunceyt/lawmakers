@@ -1,0 +1,125 @@
+<?php
+/**
+ * @file
+ * Module file for Lawmakers API
+ */
+
+module_load_include('inc', 'lawmakers_api', 'lawmakers_api.classes');
+
+function lawmakers_api_menu() {
+  $items = array();
+
+  $items['lawmakers/details/%'] = array(
+    'page callback' => 'lawmakers_api_page_callback',
+    'page arguments' => array(2),
+    'access arguments' => array('access content'),
+    'type' => MENU_NORMAL_ITEM,
+  );
+
+  $items['admin/config/services/lawmakers-api'] = array(
+    'title' => t('Lawmakers API Keys'),
+    'description' => t('Add all of the API Keys for each supported upstream API'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('lawmakers_api_admin_callback'),
+    'access arguments' => array('administer site configuration'),
+    'type' => MENU_NORMAL_ITEM,
+    'file' => 'lawmakers_api.admin.inc',
+  );
+
+  return $items;
+}
+
+
+function lawmakers_api_page_callback($entity_id) {
+  $node = entity_load('lawmakers', array($entity_id));
+  $bioguide_id = $node[$entity_id]->bioguide_id;
+
+  // Committee data.
+  $committees_query = array(
+    'member_ids' => $bioguide_id,
+  );
+
+  $committees_data = lawmakers_api_committees_filter($committees_query);
+
+  // Voting Record.
+  $vote_query = array(
+    'voter_ids.' . $bioguide_id . '__exists' => 'true',
+  );
+  $vote_data = lawmakers_api_votes_filter($vote_query);
+
+  // Bills sponsored by Current lawmaker.
+  // @TODO: Get cosponsored cosponsor_ids__all
+  // array_merge the sponsor and cosoponser
+  $sponsored_bills_query = array(
+    'sponsor_id__in' => $bioguide_id,
+  );
+  $bills_data = lawmakers_api_bills_filter($sponsored_bills_query);
+
+  // Prepare content for theme.
+  // @TODO: Cache results. (24 hrs ?)
+  $content = array(
+    'committees' => $committees_data,
+    'node' => $node[$entity_id],
+    'bills' => $bills_data,
+    'votes' => $vote_data,
+  );
+
+  return theme('lawmakers_api', $content);
+
+}
+
+
+function lawmakers_api_legislators_by_zipcode($zipcode) {
+  $sunlight_lab = new SunlightLabs();
+  $data = $sunlight_lab->byZipCode('legislators', $zipcode);
+  return $data;
+}
+
+function lawmakers_api_legislators_filter($query) {
+  $sublight_lab = new SunlightLabs();
+  $data = $sublight_lab->legislatorsFilter($query);
+  return $data;
+}
+
+function lawmakers_api_committees_filter($query) {
+  $sunlight_lab = new SunlightLabs();
+  $data = $sunlight_lab->committeesFilter($query);
+  return $data;
+}
+
+function lawmakers_api_bills_filter($query, $is_search = FALSE) {
+  $sunlight_lab = new SunlightLabs();
+  $data = $sunlight_lab->billsFilter($query, $is_search);
+  return $data;
+}
+
+function lawmakers_api_upcoming_bills_filter($query) {
+  $sunlight_lab = new SunlightLabs();
+  $data = $sunlight_lab->upcomingBillsFilter($query);
+  return $data;
+}
+
+function lawmakers_api_votes_filter($query) {
+  $sunlight_lab = new SunlightLabs();
+  $data = $sunlight_lab->votesFilter($query);
+  return $data;
+}
+
+/**
+ * Implements hook_theme().
+ */
+function lawmakers_api_theme() {
+  $items = array();
+  $items['lawmakers_api'] = array(
+    'variables' => array(
+      'committiees' => NULL,
+      'node' => NULL,
+      'bills' => NULL,
+      'votes' => NULL,
+    ),
+    'file' => 'lawmakers-api.tpl.php',
+    'path' => drupal_get_path('module', 'lawmakers_api') . '/theme',
+  );
+
+  return $items;
+}

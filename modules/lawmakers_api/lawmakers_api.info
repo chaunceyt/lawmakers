@@ -1,0 +1,5 @@
+name = Lawmakers API
+description = "Lawmaker API"
+core = 7.x
+package = Lawmakers
+dependencies[] = lawmakers
