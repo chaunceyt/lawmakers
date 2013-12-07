@@ -20,8 +20,19 @@ class lawmakersApi {
   }
 
   protected function lawmakers_api_response($apiUrl) {
-    $response = drupal_http_request($apiUrl);
-    return drupal_json_decode($response->data);
+    $cache_key = md5($apiUrl);
+    $cache_data = cache_get($cache_key);
+
+    if (isset($cache_data->data)) {
+      $response = $cache_data->data;
+    }
+    else {
+      $response_data = drupal_http_request($apiUrl);
+      $response = drupal_json_decode($response_data->data);
+      cache_set($cache_key, $response);
+    }
+
+    return $response;
   }
 
 }

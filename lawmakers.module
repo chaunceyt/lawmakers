@@ -9,7 +9,7 @@
 define('TOTAL_ITEMS_PER_PAGE', 50);
 
 // Admin uri links.
-define('ADMIN_CONTENT_LAMWAKERS_MANAGE_URI', 'admin/content/lawmakers/manage/');
+define('ADMIN_CONTENT_LAWMAKERS_MANAGE_URI', 'admin/content/lawmakers/manage/');
 define('ADMIN_CONTENT_LAWMAKERS_URI', 'admin/content/lawmakers');
 
 /**
