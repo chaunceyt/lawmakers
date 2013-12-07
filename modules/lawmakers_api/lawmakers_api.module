@@ -4,8 +4,15 @@
  * Module file for Lawmakers API
  */
 
-module_load_include('inc', 'lawmakers_api', 'lawmakers_api.classes');
+// Load base class.
+module_load_include('inc', 'lawmakers_api', 'includes/lawmakers_api.base.class');
 
+// Load other classes.
+module_load_include('inc', 'lawmakers_api', 'includes/lawmakers_api.sunlightlabs');
+
+/**
+ * Implements hook_menu().
+ */
 function lawmakers_api_menu() {
   $items = array();
 
@@ -29,7 +36,9 @@ function lawmakers_api_menu() {
   return $items;
 }
 
-
+/**
+ * Callback function for hook_menu().
+ */
 function lawmakers_api_page_callback($entity_id) {
   $node = entity_load('lawmakers', array($entity_id));
   $bioguide_id = $node[$entity_id]->bioguide_id;
